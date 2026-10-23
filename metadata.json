@@ -1,0 +1,6 @@
+{
+  "name": "Varsity Admission Live Exam Portal 2026-27",
+  "description": "বিশ্ববিদ্যালয় ভর্তি প্রস্তুতি লাইভ এক্সাম পোর্টাল (RU, CU, KU, CoU, GST) — ৩৫ প্রশ্ন, ১৮ মিনিট টাইমার, লকড অ্যানসার, বিস্তারিত ব্যাখ্যা ও রিভিশন মোড।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
