@@ -1,0 +1,72 @@
+import { GoogleGenAI, Type } from '@google/genai';
+
+// Initialize the Google Gen AI SDK
+// Uses process.env.GEMINI_API_KEY securely on the server
+const apiKey = process.env.GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : new GoogleGenAI({});
+
+export default async function handler(req, res) {
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed. Use POST.' });
+  }
+
+  try {
+    const { prompt } = req.body || {};
+
+    if (!prompt || typeof prompt !== 'string') {
+      return res.status(400).json({ error: 'Missing or invalid "prompt" in request body.' });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        error: 'GEMINI_API_KEY is not configured in environment variables.',
+      });
+    }
+
+    // Generate questions using the fast, modern gemini-3.8-flash model
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.8-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              question: { type: Type.STRING, description: 'Question text' },
+              options: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: 'Array of exactly 4 choices',
+              },
+              correctAnswer: {
+                type: Type.INTEGER,
+                description: '0-based index of the correct option (0, 1, 2, or 3)',
+              },
+              explanation: {
+                type: Type.STRING,
+                description: 'Explanation for why the correct answer is right',
+              },
+            },
+            required: ['question', 'options', 'correctAnswer', 'explanation'],
+          },
+        },
+      },
+    });
+
+    if (!response.text) {
+      throw new Error('No response text returned from Gemini API.');
+    }
+
+    const parsedData = JSON.parse(response.text);
+    return res.status(200).json(parsedData);
+
+  } catch (error) {
+    console.error('Gemini API Handler Error:', error);
+    return res.status(500).json({
+      error: error.message || 'Internal server error while generating exam content.',
+    });
+  }
+}
